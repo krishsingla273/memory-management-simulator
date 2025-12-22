@@ -5,7 +5,8 @@
 PhysicalMemory::PhysicalMemory(size_t size, AllocationStrategy strat) {
     totalSize = size;
     strategy = strat;
-
+    totalRequests = 0;
+    successfulRequests = 0;
     // Initially one big free block
     blocks.push_back(MemoryBlock(0, size, true));
 }
@@ -36,7 +37,7 @@ void PhysicalMemory::dumpMemory() const {
 //Allocate memory
 
 int PhysicalMemory::allocate(size_t size) {
-
+    totalRequests++; 
     int required_index = -1;
 
     // FIRST FIT
@@ -94,7 +95,7 @@ int PhysicalMemory::allocate(size_t size) {
 
         blocks.insert(blocks.begin() + required_index + 1, newBlock);
     }
-
+    successfulRequests ++ ;
     return (int)startAddress;
 }
 
@@ -124,4 +125,66 @@ void PhysicalMemory::freeBlock(size_t startAddress) {
             return;
         }
     }
+}
+
+size_t PhysicalMemory::getTotalFreeMemory() const {
+
+    size_t totalFree = 0;
+
+    for (const MemoryBlock& block : blocks) {
+        if (block.isFree) {
+            totalFree += block.size;
+        }
+    }
+
+    return totalFree;
+}
+
+size_t PhysicalMemory::getLargestFreeBlock() const {
+
+    size_t largest = 0;
+
+    for (const MemoryBlock& block : blocks) {
+        if (block.isFree && block.size > largest) {
+            largest = block.size;
+        }
+    }
+
+    return largest;
+}
+
+double PhysicalMemory::getExternalFragmentation() const {
+
+    size_t totalFree = getTotalFreeMemory();
+
+    if (totalFree == 0) {
+        return 0.0;
+    }
+
+    size_t largestFree = getLargestFreeBlock();
+
+    return 1.0 - (double)largestFree / totalFree;
+}
+
+double PhysicalMemory::getMemoryUtilization() const {
+
+    size_t allocated = 0;
+
+    for (const MemoryBlock& block : blocks) {
+        if (!block.isFree) {
+            allocated += block.size;
+        }
+    }
+
+    return (double)allocated / totalSize;
+}
+
+
+double PhysicalMemory::getAllocationSuccessRate() const {
+
+    if (totalRequests == 0) {
+        return 0.0;
+    }
+
+    return (double)successfulRequests / totalRequests;
 }

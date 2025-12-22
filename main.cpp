@@ -1,33 +1,32 @@
 #include <iostream>
+#include <string>
 #include "memory/PhysicalMemory.h"
 
 void testStrategy(AllocationStrategy strategy, const std::string& name) {
 
-    std::cout << "\n" << name << "\n";
+    std::cout << "\n========== " << name << " ==========\n";
 
     PhysicalMemory memory(1000, strategy);
 
-    // Step 1: Create fragmentation
-    int a = memory.allocate(100);   // Block A
-    int b = memory.allocate(300);   // Block B
-    int c = memory.allocate(200);   // Block C
+    int a = memory.allocate(100);
+    int b = memory.allocate(300);
+    int c = memory.allocate(200);
 
-    // Memory now:
-    // [100 A][300 B][200 C][400 Free]
-
-    // Step 2: Free middle block to create hole
     memory.freeBlock(b);
 
-    // Memory now:
-    // [100 A][300 Free][200 C][400 Free]
-
-    // Step 3: Allocate 250 bytes
-    // This fits in BOTH 300 and 400 blocks
-    memory.dumpMemory();
-    
     memory.allocate(250);
 
     memory.dumpMemory();
+
+    std::cout << "\nMetrics:\n";
+    std::cout << "Total Free Memory: " << memory.getTotalFreeMemory() << "\n";
+    std::cout << "Largest Free Block: " << memory.getLargestFreeBlock() << "\n";
+    std::cout << "External Fragmentation: " 
+              << memory.getExternalFragmentation() << "\n";
+    std::cout << "Memory Utilization: " 
+              << memory.getMemoryUtilization() << "\n";
+    std::cout << "Allocation Success Rate: " 
+              << memory.getAllocationSuccessRate() << "\n";
 }
 
 int main() {
