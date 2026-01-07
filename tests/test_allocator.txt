@@ -1,0 +1,7 @@
+1000
+FIRST_FIT
+4
+malloc 100
+malloc 300
+malloc 200
+free 100
