@@ -1,59 +1,139 @@
 #include <iostream>
-#include "vmm/VirtualMemoryManager.h"
+#include <string>
+#include "memory/PhysicalMemory.h"
 #include "cache/SetAssociativeCache.h"
+#include "vmm/VirtualMemoryManager.h"
 
-int main() {
+using namespace std;
 
-    // Stage 6: Virtual Memory
-    VirtualMemoryManager vmm(
-        100,   // page size
-        10,    // virtual pages
-        4      // physical frames
-    );
+/* ---------------- STAGE 1–4 ---------------- */
+void demoAllocator() {
+    cout << "\n==============================\n";
+    cout << "STAGE 1:4 : MEMORY ALLOCATION\n";
+    cout << "==============================\n";
 
-    // Stage 5: Cache (physical-address based)
-    SetAssociativeCache L1(4, 100, 2);  // 4 blocks, 2-way
-    SetAssociativeCache L2(8, 100, 4);  // 8 blocks, 4-way
+    int totalMemory;
+    cin >> totalMemory;
 
-    int virtualAddresses[] = {
-        10, 120, 250, 330,
-        410, 120, 10, 250
-    };
+    string strategy;
+    cin >> strategy;
 
-    for (int va : virtualAddresses) {
+    AllocationStrategy strat;
+    if (strategy == "FIRST_FIT") strat = FIRST_FIT;
+    else if (strategy == "BEST_FIT") strat = BEST_FIT;
+    else strat = WORST_FIT;
 
-        //  Virtual → Physical
-        int pa = vmm.translate(va);
+    PhysicalMemory mem(totalMemory, strat);
 
-        //  Cache hierarchy
-        if (L1.contains(pa)) {
-            L1.recordHit();
-            L1.touch(pa);
+    int ops;
+    cin >> ops;
+
+    for (int i = 0; i < ops; i++) {
+        string command;
+        cin >> command;
+
+        if (command == "malloc") {
+            int sz;
+            cin >> sz;
+            int addr = mem.allocate(sz);
+            if (addr == -1)
+                cout << "malloc(" << sz << ") -> FAILED\n";
+            else
+                cout << "malloc(" << sz << ") -> address " << addr << "\n";
         }
-        else {
-            L1.recordMiss();
+        else if (command == "free") {
+            int addr;
+            cin >> addr;
+            mem.freeBlock(addr);
+            cout << "free(" << addr << ")\n";
+        }
 
-            if (L2.contains(pa)) {
-                L2.recordHit();
-                L2.touch(pa);
-                L1.touch(pa);   // promote
-            }
-            else {
-                L2.recordMiss();
-                L2.touch(pa);
-                L1.touch(pa);
+        mem.dumpMemory();
+        cout << "External Fragmentation: "
+             << mem.getExternalFragmentation() << "\n";
+        cout << "Memory Utilization: "
+             << mem.getMemoryUtilization() << "\n\n";
+    }
+}
+
+void demoCache() {
+    cout << "\n==============================\n";
+    cout << "STAGE 5: CACHE HIERARCHY\n";
+    cout << "==============================\n";
+
+    SetAssociativeCache* L1 = nullptr;
+
+    int commands;
+    cin >> commands;
+
+    for (int i = 0; i < commands; i++) {
+        string cmd;
+        cin >> cmd;
+
+        if (cmd == "INIT_CACHE") {
+            int cacheSize, blockSize, assoc;
+            cin >> cacheSize >> blockSize >> assoc;
+
+            delete L1; // safe even if nullptr
+            L1 = new SetAssociativeCache(cacheSize, blockSize, assoc);
+
+            cout << "Cache Initialized\n";
+            cout << "Cache Size: " << cacheSize << "\n";
+            cout << "Block Size: " << blockSize << "\n";
+            cout << "Associativity: " << assoc << "\n\n";
+        }
+
+        else if (cmd == "CACHE_ACCESS") {
+            int addr;
+            cin >> addr;
+
+            if (L1->contains(addr)) {
+                L1->recordHit();
+                L1->touch(addr);
+                cout << addr << " -> HIT\n";
+            } else {
+                L1->recordMiss();
+                L1->touch(addr);
+                cout << addr << " -> MISS\n";
             }
         }
 
-        std::cout << "VA " << va << " -> PA " << pa << "\n";
+        else if (cmd == "CACHE_STATS") {
+            cout << "\nCache Statistics:\n";
+            cout << "Hit Ratio: " << L1->getHitRatio() << "\n\n";
+        }
     }
 
-    std::cout << "\n Metrics \n";
-    std::cout << "Page Faults: " << vmm.getPageFaults() << "\n";
-    std::cout << "Page Fault Rate: " << vmm.getPageFaultRate() << "\n";
+    delete L1;
+}
+/* ---------------- STAGE 6 ---------------- */
+void demoVirtualMemory() {
+    cout << "\n==============================\n";
+    cout << "STAGE 6: VIRTUAL MEMORY\n";
+    cout << "==============================\n";
 
-    std::cout << "\nL1 Hit Ratio: " << L1.getHitRatio() << "\n";
-    std::cout << "L2 Hit Ratio: " << L2.getHitRatio() << "\n";
+    int pageSize, virtualPages, physicalFrames;
+    cin >> pageSize >> virtualPages >> physicalFrames;
 
+    VirtualMemoryManager vmm(pageSize, virtualPages, physicalFrames);
+
+    int n;
+    cin >> n;
+
+    for (int i = 0; i < n; i++) {
+        int va;
+        cin >> va;
+        int pa = vmm.translate(va);
+        cout << "VA " << va << " -> PA " << pa << "\n";
+    }
+
+    cout << "\nPage Faults: " << vmm.getPageFaults() << "\n";
+    cout << "Page Fault Rate: " << vmm.getPageFaultRate() << "\n";
+}
+
+int main() {
+    demoAllocator();
+    demoCache();
+    demoVirtualMemory();
     return 0;
 }
