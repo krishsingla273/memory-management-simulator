@@ -5,3 +5,42 @@ malloc 100
 malloc 300
 malloc 200
 free 100
+
+OUTPUT
+
+==============================
+STAGE 1:4 : MEMORY ALLOCATION
+==============================
+
+malloc(100) -> address 0
+Memory Layout:
+[Start: 0, Size: 100, Allocated]
+[Start: 100, Size: 900, Free]
+External Fragmentation: 0
+Memory Utilization: 0.1
+
+malloc(300) -> address 100
+Memory Layout:
+[Start: 0, Size: 100, Allocated]
+[Start: 100, Size: 300, Allocated]
+[Start: 400, Size: 600, Free]
+External Fragmentation: 0
+Memory Utilization: 0.4
+
+malloc(200) -> address 400
+Memory Layout:
+[Start: 0, Size: 100, Allocated]
+[Start: 100, Size: 300, Allocated]
+[Start: 400, Size: 200, Allocated]
+[Start: 600, Size: 400, Free]
+External Fragmentation: 0
+Memory Utilization: 0.6
+
+free(100)
+Memory Layout:
+[Start: 0, Size: 100, Allocated]
+[Start: 100, Size: 300, Free]
+[Start: 400, Size: 200, Allocated]
+[Start: 600, Size: 400, Free]
+External Fragmentation: 0.42
+Memory Utilization: 0.3

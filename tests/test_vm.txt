@@ -7,3 +7,20 @@
 410
 120
 10
+
+OUTPUT
+
+==============================
+STAGE 6: VIRTUAL MEMORY
+==============================
+
+VA 10 -> PA 10
+VA 120 -> PA 120
+VA 250 -> PA 250
+VA 330 -> PA 330
+VA 410 -> PA 10
+VA 120 -> PA 120
+VA 10 -> PA 210
+
+Page Faults: 6
+Page Fault Rate: 0.857143
